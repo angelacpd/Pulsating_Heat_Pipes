@@ -1,142 +1,248 @@
-%% CÁLCULO DAS FREQUÊNCIAS
-% Variação de potência no tempo
-% Início: 0 W por 10 segundos.
-% Fim: 0  W por 100 segundos.
-% Demais potências: duração de 900 segundos.
-% Período (s) - Potência (W)
+%% FREQUENCY ANALYSIS OF PULSATING HEAT PIPES
 
-
-
-% Grupo 1 - Condensador
+% Sensor placement:
+% Group 1 - Condenser
 % T1 - T5
-% Grupo 2 - Adiabática
+% Group 2 - Adiabatic
 % T6 - T8
-% Grupo 3 - Evaporador
+% Group 3 - Evaporator
 % T9 - T13
 
-% Separação por canais.
+% Channel separation:
 % T1, T6, T9
 % T3, T7, T11
 % T5, T8, T13
 
-% Cada patamar de potência tem duração de 900 ms
+% Power profile:
+% Start: 0 W for 10 seconds.
+% Power step: period 900 seconds.
+% End: 0 W for 100 seconds.
 
-%% Clean everything.
-clear all; clc; close all;
+% Heat Pipes Laboratory
+% Federal University of Santa Catarina
+% Florianopolis - Brazil
 
-%% Specify the parameters of a signal with a sampling frequency (Fs) of 1 Hz and a signal duration of N seconds.
+%% Clear workspace; clear command window; close windows.
+clearvars; clc; close all;
 
+%% Inputs
 
-Fs = 1;            % Sampling frequency
-T = 1/Fs;             % Sampling period
-
-%% Import text file.
-
-filename = 'horizontal_circular_26canais_3mm_RP50.txt';
+% Data to be shown on the left side of the graphic.
+filename_l = 'horizontal_circular_26canais_3mm_RP50.txt';
+% Data to be shown on the right side of the graphic.
+filename_r = 'horizontal_ranhurado_26canais_3mm_RP50.txt';
 delimiterIn = ' ';
 headerlinesIn = 1;
-B = importdata(filename,delimiterIn,headerlinesIn);
 
-filename_split = split(filename,'_');
-tube_format_cell = filename_split(2);
-tube_format = cell2mat(tube_format_cell);
+xlim_on = 1; % 0 = Off. 1 = On.
+ylim_on = 1; % 0 = Off. 1 = On.
+xmax = 0.2;
 
+Fs = 1;     % Sampling frequency
+n_sensors = 13;     % Number of sensors
 
-nome = B.colheaders;
-tempo = B.data(2:end,1);
-t = tempo - tempo(2);
-T_amb = B.data(2:end,2);
-Pot = B.data(2:end,24);
-n_sensores = 13;
-L = length(tempo);
-Temp = zeros(L,n_sensores);
+%% Import text files.
 
+% Left
+data_l = importdata(filename_l,delimiterIn,headerlinesIn);
+% Split filename to get tube format.
+filename_l_split = split(filename_l,'_');
+tube_format_l_cell = filename_l_split(2);
+tube_format_l = cell2mat(tube_format_l_cell);
 
-for i = 1:1:n_sensores
-    Temp(:,i) = B.data(2:end,i+2);
+%nome = data_l.colheaders;
+%t = tempo - tempo(2);
+%T_amb = data_l.data(2:end,2);
+
+time_v_l = data_l.data(2:end,1);      % Time vector.
+power_v_l = data_l.data(2:end,24);    % Power vector.
+
+length_l = length(time_v_l);    % Length of time vector.
+temp_l = zeros(length_l,n_sensors);     % Temperature matrix declaration.
+
+% Temperature matrix.
+for i = 1:n_sensors
+    temp_l(:,i) = data_l.data(2:end,i+2);
 end
 
+% Right
+data_r = importdata(filename_r,delimiterIn,headerlinesIn);
+% Split filename to get tube format.
+filename_r_split = split(filename_r,'_');
+tube_format_r_cell = filename_r_split(2);
+tube_format_r = cell2mat(tube_format_r_cell);
+
+time_v_r = data_r.data(2:end,1);      % Time vector.
+power_v_r = data_r.data(2:end,24);    % Power vector.
+
+length_r = length(time_v_r);    % Length of time vector.
+temp_r = zeros(length_r,n_sensors);     % Temperature matrix declaration.
+
+% Temperature matrix.
+for i = 1:n_sensors
+    temp_r(:,i) = data_r.data(2:end,i+2);
+end
+
+% Time analysis for one sensor
 figure(100)
+title(tube_format_l)
 yyaxis left
-plot(tempo,Temp(:,6))
+plot(time_v_l,temp_l(:,6))
 yyaxis right
-%hold on
-plot(tempo,Pot)
+plot(time_v_l,power_v_l)
 grid on
 
+figure(101)
+title(tube_format_r)
+yyaxis left
+plot(time_v_r,temp_r(:,6))
+yyaxis right
+plot(time_v_r,power_v_r)
+grid on
 
-%% Patamares de T1
+%% Split temperature vectors according to the power level.
 j = 1;
 m = 1;
 k = 0;
 flag = 0;
 
-for n = 1:n_sensores
-%for n = 1
+f = 1;
+g = 1;
+h = 0;
+flag_r = 0;
+
+for n = 1:n_sensors
     
     while (flag == 0)
         k = k+1;
         
-        if k > L
+        if k > length_l
             flag = 1;
             break
         end
         
-        if Pot(k) > 95
-            Patamar(j,m) = Temp(k,n);
-            Temp_Pot(k,:) = [Temp(k,n), Pot(k)];
+        if power_v_l(k) > 95
+            level_l(j,m) = temp_l(k,n);
+            level_r(j,m) = temp_r(k,n);
+            temp_power_l(k,:) = [temp_l(k,n), power_v_l(k)];
+            
             j = j+1;
-
-            if (Pot(k) ~= Pot(k-1)) 
-                if Patamar(5:end,m) == 0
-                    Patamar(:,m) = [];
+            
+            if (power_v_l(k) ~= power_v_l(k-1))
+                if level_l(3:end,m) == 0
+                    level_l(:,m) = [];
+                    level_r(:,m) = [];
                 else
                     m = m + 1;
-                    Power(m) = Pot(k+3);
+                    power(m) = power_v_l(k+3);
                 end
-                j = 1;               
+                
+%                 if level_r(5:end,m) == 0
+%                     level_r(:,m) = [];
+%                 else
+%                     m = m + 1;
+%                     power_r(m) = power_v_r(k+3);
+%                 end
+                
+                j = 1;
             end
-        end    
+        end
     end
-
-Patamar(:,1) = [];
-Power(1) = [];
-
-n_patamares = size(Patamar);
-for p = 1:n_patamares(2)
-    Xp = Patamar(:,p);    
-    Xp = Xp - mean(Xp);
-    np = 2^nextpow2(length(Patamar(:,p)));
-    f = Fs*(0:(np/2))/np;
-    %Y = fft(Xp,np);
-    Y = fft(Xp);
-    %P = abs((Y.^2)/n);
-    P2 = (1/(Fs*np))*abs(Y).^2;
-    P1 = P2(1:np/2+1);
-    P1(2:end-1) = 2*P1(2:end-1);
     
+    level_l(:,1) = [];
+    power(1) = [];
+    level_r(:,1) = [];
+%    power_r(1) = [];
     
-    
-         if n == 1
+    n_levels = size(level_l);
+    for p = 1:n_levels(2)
+        
+        % Left
+        Xp = level_l(:,p);
+        Xp = Xp - mean(Xp);
+        np = 2^nextpow2(length(level_l(:,p)));
+        f = Fs*(0:(np/2))/np;
+        Y = fft(Xp);
+        P2 = (1/(Fs*np))*abs(Y).^2;
+        P1 = P2(1:np/2+1);
+        P1(2:end-1) = 2*P1(2:end-1);
+        
+        % Right
+        Zp = level_r(:,p);
+        Zp = Zp - mean(Zp);
+        %np = 2^nextpow2(length(level_l(:,p)));
+        %f = Fs*(0:(np/2))/np;
+        W = fft(Zp);
+        P4 = (1/(Fs*np))*abs(W).^2;
+        P3 = P4(1:np/2+1);
+        P3(2:end-1) = 2*P3(2:end-1);
+        
+        P1max = max(P1(1:np/2+1));
+        P3max = max(P3(1:np/2+1));
+        if P1max > P3max
+            Pmax = P1max;
+        else
+            Pmax = P3max;
+        end
+        
+        ymax = 100*ceil(Pmax/100);
+        
+        if n == 1
             figure(p)
             subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b')            
-            title({['Circular', ' - Power: ', num2str(floor(Power(p))), ' W'];['Sensor T', num2str(n)]})
+            plot(f,P1(1:np/2+1),'b')
+            title({['Circular', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]})
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
-            ymax = max(P1(1:np/2+1));
-            % ylim([0 100*ceil(ymax)])
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+            
+            % figure(p)
+            subplot(3,2,2)
+            plot(f,P3(1:np/2+1),'b')            
+            title({['Grooved', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]})
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
         elseif n == 6
             figure(p)
             subplot(3,2,3)
             plot(f,P1(1:np/2+1),'b')
-            %title(['Sensor T', num2str(n), ' - Power: ', num2str(floor(Power(p))), ' W'])
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+            
+            subplot(3,2,4)
+            plot(f,P3(1:np/2+1),'b')
+            title(['Sensor T', num2str(n)])
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
         elseif n == 9
             figure(p)
@@ -146,18 +252,55 @@ for p = 1:n_patamares(2)
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
-         end
-        
-         
-         if n == 3
-            figure(p+20)
-            subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b')
-            title({['Circular', ' - Power: ', num2str(floor(Power(p))), ' W'];['Sensor T', num2str(n)]})
+            subplot(3,2,6)
+            plot(f,P3(1:np/2+1),'b')
+            title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+        end
+        
+        
+        if n == 3
+            figure(p+20)
+            subplot(3,2,1)
+            plot(f,P1(1:np/2+1),'b')
+            title({['Circular', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]})
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+            
+            subplot(3,2,2)
+            plot(f,P3(1:np/2+1),'b')
+            title({['Grooved', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]})
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
         elseif n == 7
             figure(p+20)
@@ -167,6 +310,25 @@ for p = 1:n_patamares(2)
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+            
+            subplot(3,2,4)
+            plot(f,P3(1:np/2+1),'b')
+            title(['Sensor T', num2str(n)])
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
         elseif n == 11
             figure(p+20)
@@ -176,18 +338,55 @@ for p = 1:n_patamares(2)
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
-         end
-        
-         
-         if n == 5
-            figure(p+40)
-            subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b')
-            title({['Circular', ' - Power: ', num2str(floor(Power(p))), ' W'];['Sensor T', num2str(n)]})
+            subplot(3,2,6)
+            plot(f,P3(1:np/2+1),'b')
+            title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+        end
+        
+        
+        if n == 5
+            figure(p+40)
+            subplot(3,2,1)
+            plot(f,P1(1:np/2+1),'b')
+            title({['Circular', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]})
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+            
+            subplot(3,2,2)
+            plot(f,P3(1:np/2+1),'b')
+            title({['Grooved', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]})
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
         elseif n == 8
             figure(p+40)
@@ -197,6 +396,25 @@ for p = 1:n_patamares(2)
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
+            
+            subplot(3,2,4)
+            plot(f,P3(1:np/2+1),'b')
+            title(['Sensor T', num2str(n)])
+            xlabel('Frequency [Hz]')
+            ylabel('Magnitude')
+            grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
         elseif n == 13
             figure(p+40)
@@ -207,212 +425,42 @@ for p = 1:n_patamares(2)
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
-            
-        end
-    
-    
-end    
-    
-j = 1;
-m = 1;
-k = 0;
-flag = 0;
-clear Patamar
-clear Power
-clear Temp_Pot
-    
-    
-    
-end
-
-
-clear all;
-
-%% Import text file.
-filename = 'horizontal_ranhurado_26canais_3mm_RP50.txt';
-delimiterIn = ' ';
-headerlinesIn = 1;
-B = importdata(filename,delimiterIn,headerlinesIn);
-
-Fs = 1;            % Sampling frequency
-T = 1/Fs;             % Sampling period
-nome = B.colheaders;
-tempo = B.data(2:end,1);
-t = tempo - tempo(2);
-T_amb = B.data(2:end,2);
-Pot = B.data(2:end,24);
-n_sensores = 13;
-L = length(tempo);
-Temp = zeros(L,n_sensores);
-
-
-for i = 1:1:n_sensores
-    Temp(:,i) = B.data(2:end,i+2);
-end
-
-figure(200)
-yyaxis left
-plot(tempo,Temp(:,6))
-yyaxis right
-%hold on
-plot(tempo,Pot)
-grid on
-
-
-%% Patamares de T1
-j = 1;
-m = 1;
-k = 0;
-flag = 0;
-
-for n = 1:n_sensores
-%for n = 1
-    
-    while (flag == 0)
-        k = k+1;
-        
-        if k > L
-            flag = 1;
-            break
-        end
-        
-        if Pot(k) > 95
-            Patamar(j,m) = Temp(k,n);
-            Temp_Pot(k,:) = [Temp(k,n), Pot(k)];
-            j = j+1;
-
-            if (Pot(k) ~= Pot(k-1)) 
-                if Patamar(5:end,m) == 0
-                    Patamar(:,m) = [];
-                else
-                    m = m + 1;
-                    Power(m) = Pot(k+3);
-                end
-                j = 1;               
+            if xlim_on == 1
+                xlim([0 xmax])
             end
-        end    
-    end
-
-Patamar(:,1) = [];
-Power(1) = [];
-
-n_patamares = size(Patamar);
-for p = 1:n_patamares(2)
-    Xp = Patamar(:,p);    
-    Xp = Xp - mean(Xp);
-    np = 2^nextpow2(length(Patamar(:,p)));
-    f = Fs*(0:(np/2))/np;
-    %Y = fft(Xp,np);
-    Y = fft(Xp);
-    %P = abs((Y.^2)/n);
-    P2 = (1/(Fs*np))*abs(Y).^2;
-    P1 = P2(1:np/2+1);
-    P1(2:end-1) = 2*P1(2:end-1);
-    
-    
-    
-         if n == 1
-            figure(p)
-            subplot(3,2,2)
-            plot(f,P1(1:np/2+1),'b')
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
-            title({['Grooved', ' - Power: ', num2str(floor(Power(p))), ' W'];['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-        elseif n == 6
-            figure(p)
-            subplot(3,2,4)
-            plot(f,P1(1:np/2+1),'b')
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-        elseif n == 9
-            figure(p)
             subplot(3,2,6)
-            plot(f,P1(1:np/2+1),'b')
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-         end
-        
-         
-         if n == 3
-            figure(p+20)
-            subplot(3,2,2)
-            plot(f,P1(1:np/2+1),'b')
-            title({['Grooved', ' - Power: ', num2str(floor(Power(p))), ' W'];['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-        elseif n == 7
-            figure(p+20)
-            subplot(3,2,4)
-            plot(f,P1(1:np/2+1),'b')
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-        elseif n == 11
-            figure(p+20)
-            subplot(3,2,6)
-            plot(f,P1(1:np/2+1),'b')
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-         end
-        
-         
-         if n == 5
-            figure(p+40)
-            subplot(3,2,2)
-            plot(f,P1(1:np/2+1),'b')
-            title({['Grooved', ' - Power: ', num2str(floor(Power(p))), ' W'];['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-        elseif n == 8
-            figure(p+40)
-            subplot(3,2,4)
-            plot(f,P1(1:np/2+1),'b')
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            grid on
-            
-        elseif n == 13
-            figure(p+40)
-            subplot(3,2,6)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b')
             ylim([0 800])
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
             grid on
+            if xlim_on == 1
+                xlim([0 xmax])
+            end
+            if ylim_on == 1
+                ylim([0 ymax])
+            end
             
         end
+        
+        
+    end
     
-    
-end    
-    
-j = 1;
-m = 1;
-k = 0;
-flag = 0;
-clear Patamar
-clear Power
-clear Temp_Pot
+    j = 1;
+    m = 1;
+    k = 0;
+    flag = 0;
+    clear level_l
+    clear level_r 
+    clear power
+    clear temp_power
     
     
     
 end
+
