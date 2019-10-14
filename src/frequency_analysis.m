@@ -69,6 +69,7 @@ rp = cell2mat(rp_cell(1));
 position = cell2mat(filename_l_split(1));
 folder_name = [position, '_', rp];
 [status, msg, msgID] = mkdir(['graphics\',folder_name]);
+store_path = ['graphics\',folder_name];
 
 %nome = data_l.colheaders;
 %t = tempo - tempo(2);
@@ -167,6 +168,8 @@ for n = 1:n_sensors
     power(1) = [];
     level_r(:,1) = [];
 %    power_r(1) = [];
+
+    [max_power, max_power_index] = max(power);
     
     n_levels = size(level_l);
     for p = 1:n_levels(2)
@@ -202,9 +205,17 @@ for n = 1:n_sensors
         end
         ymax = 100*ceil(Pmax/100);
         
+        if p <= max_power_index
+            ascdesc = 'A';
+        else
+            ascdesc = 'D';
+        end
+        
         % Plot
         if n == 1
             figure(p)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,1)
             plot(f,P1(1:np/2+1),'b')
@@ -233,10 +244,12 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',12)            
             
         elseif n == 6
             figure(p)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,3)
             plot(f,P1(1:np/2+1),'b')
@@ -268,6 +281,8 @@ for n = 1:n_sensors
             
         elseif n == 9
             figure(p)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,5)
             plot(f,P1(1:np/2+1),'b')
@@ -296,12 +311,17 @@ for n = 1:n_sensors
                 ylim([0 ymax])
             end
             set(gca,'FontSize',12)
+                               
+            savename = ['Group 169 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+            saveas(p,fullfile(store_path, savename),'tiffn')
         end
         %suptitle(['Power: ', num2str(floor(power(p))), ' W'])
         
         if n == 3
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
             figure(p+20)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             subplot(3,2,1)
             plot(f,P1(1:np/2+1),'b')
             title({'Circular';['Sensor T', num2str(n)]})         
@@ -333,6 +353,8 @@ for n = 1:n_sensors
         elseif n == 7
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
             figure(p+20)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             subplot(3,2,3)
             plot(f,P1(1:np/2+1),'b')
             title(['Sensor T', num2str(n)])
@@ -363,6 +385,7 @@ for n = 1:n_sensors
             
         elseif n == 11
             figure(p+20)
+            set(gcf, 'Position', get(0, 'Screensize'));
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
             subplot(3,2,5)
             plot(f,P1(1:np/2+1),'b')
@@ -391,12 +414,17 @@ for n = 1:n_sensors
                 ylim([0 ymax])
             end
             set(gca,'FontSize',12)
+            
+            savename = ['Group 3711 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+            saveas(p,fullfile(store_path, savename),'tiffn')
         end
         %suptitle(['Power: ', num2str(floor(power(p))), ' W'])
         
         if n == 5
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
             figure(p+40)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             subplot(3,2,1)
             plot(f,P1(1:np/2+1),'b')
             title({'Circular';['Sensor T', num2str(n)]})
@@ -428,6 +456,8 @@ for n = 1:n_sensors
         elseif n == 8
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
             figure(p+40)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             subplot(3,2,3)
             plot(f,P1(1:np/2+1),'b')
             title(['Sensor T', num2str(n)])
@@ -459,6 +489,8 @@ for n = 1:n_sensors
         elseif n == 13
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
             figure(p+40)
+            set(gcf, 'Position', get(0, 'Screensize'));
+            
             subplot(3,2,5)
             plot(f,P1(1:np/2+1),'b')
             ylim([0 800])
@@ -489,6 +521,9 @@ for n = 1:n_sensors
             end
             set(gca,'FontSize',12)
             
+            savename = ['Group 5813 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+            saveas(p,fullfile(store_path, savename),'tiffn')
+            
         end
         %suptitle(['Power: ', num2str(floor(power(p))), ' W'])
         
@@ -506,4 +541,3 @@ for n = 1:n_sensors
     
     
 end
-
