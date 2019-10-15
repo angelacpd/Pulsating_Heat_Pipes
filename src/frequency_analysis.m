@@ -22,15 +22,16 @@
 % Federal University of Santa Catarina
 % Florianopolis - Brazil
 
+tic
 %% Clear workspace; clear command window; close windows.
 clearvars; clc; close all;
 
 %% Inputs
 
 % Data to be shown on the left side of the graphic.
-filename_l = 'horizontal_circular_26canais_3mm_RP50.txt';
+filename_l = 'inverted_circular_26canais_3mm_RP60.txt';
 % Data to be shown on the right side of the graphic.
-filename_r = 'horizontal_grooved_26canais_3mm_RP50.txt';
+filename_r = 'inverted_grooved_26canais_3mm_RP60.txt';
 delimiterIn = ' ';
 headerlinesIn = 1;
 
@@ -67,7 +68,7 @@ rp = cell2mat(rp_cell(1));
 
 % Create folder to store graphics
 position = cell2mat(filename_l_split(1));
-folder_name = [position, '_', rp];
+folder_name = [position, '_', rp, '_png'];
 [status, msg, msgID] = mkdir(['graphics\',folder_name]);
 store_path = ['graphics\',folder_name];
 
@@ -81,12 +82,6 @@ power_v_l = data_l.data(2:end,24);    % Power vector.
 length_l = length(time_v_l);    % Length of time vector.
 temp_l = zeros(length_l,n_sensors);     % Temperature matrix declaration.
 
-% Temperature matrix.
-for i = 1:n_sensors
-    temp_l(:,i) = data_l.data(2:end,i+2);
-end
-
-
 time_v_r = data_r.data(2:end,1);      % Time vector.
 power_v_r = data_r.data(2:end,24);    % Power vector.
 
@@ -95,31 +90,54 @@ temp_r = zeros(length_r,n_sensors);     % Temperature matrix declaration.
 
 % Temperature matrix.
 for i = 1:n_sensors
+    temp_l(:,i) = data_l.data(2:end,i+2);
     temp_r(:,i) = data_r.data(2:end,i+2);
+    
+    f1 = 100 + (2*i - 1);
+    figure(f1)
+    set(gcf, 'Position', get(0, 'Screensize'));
+    savename = [tube_format_l, ' sensor T', num2str(i)];
+    title(savename)
+    yyaxis left
+    plot(time_v_l,temp_l(:,i))
+    ylabel('Temperature [\circC]')
+    yyaxis right
+    plot(time_v_l,power_v_l)
+    xlabel('Time [s]')
+    ylabel('Power [W]')
+    grid on
+    set(gca,'FontSize',16)
+    
+    saveas(f1,fullfile(store_path, savename),'png')
+    close
+    
+    f2 = 100 + 2*i;
+    figure(f2)
+    set(gcf, 'Position', get(0, 'Screensize'));
+    savename = [tube_format_r, ' sensor T', num2str(i)];
+    title(savename)
+    yyaxis left
+    plot(time_v_r,temp_r(:,i))
+    ylabel('Temperature [\circC]')
+    yyaxis right
+    plot(time_v_r,power_v_r)
+    xlabel('Time [s]')
+    ylabel('Power [W]')
+    grid on
+    set(gca,'FontSize',16)   
+    saveas(f2,fullfile(store_path, savename),'png')
+    close
 end
 
-% Time analysis for one sensor
-figure(100)
-title(tube_format_l)
-yyaxis left
-plot(time_v_l,temp_l(:,9))
-yyaxis right
-plot(time_v_l,power_v_l)
-grid on
-
-figure(101)
-title(tube_format_r)
-yyaxis left
-plot(time_v_r,temp_r(:,9))
-yyaxis right
-plot(time_v_r,power_v_r)
-grid on
 
 %% Split temperature vectors according to the power level.
 j = 1;
 m = 1;
 k = 0;
 flag = 0;
+
+xi = 0;
+zi = 0;
 
 f = 1;
 g = 1;
@@ -174,9 +192,15 @@ for n = 1:n_sensors
     n_levels = size(level_l);
     for p = 1:n_levels(2)
         
+        if p <= max_power_index
+            ascdesc = 'ASC';
+        else
+            ascdesc = 'DESC';
+        end
+        
         % Power Spectrum Density 
         % Left
-        Xp = level_l(:,p);
+        Xp = level_l(1:end-1,p);
         Xp = Xp - mean(Xp);
         np = 2^nextpow2(length(level_l(:,p)));
         f = Fs*(0:(np/2))/np;
@@ -185,8 +209,23 @@ for n = 1:n_sensors
         P1 = P2(1:np/2+1);
         P1(2:end-1) = 2*P1(2:end-1);
         
+        xi = xi + 1;
+        xp1 = 200 + xi;
+        figure(xp1)
+        set(gcf, 'Position', get(0, 'Screensize'));
+        savename = [tube_format_l, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+        %title([tube_format_l,' Sensor ', num2str(n), ' - Power: ', num2str(floor(power(p))), ' W'])       
+        plot(Xp)
+        title(savename)
+        xlabel('Time [s]')
+        ylabel('Temperature [\circC]')
+        grid on
+        set(gca,'FontSize',16)       
+        saveas(xp1,fullfile(store_path, savename),'png')
+        close
+        
         % Right
-        Zp = level_r(:,p);
+        Zp = level_r(1:end-1,p);
         Zp = Zp - mean(Zp);
         %np = 2^nextpow2(length(level_l(:,p)));
         %f = Fs*(0:(np/2))/np;
@@ -194,6 +233,21 @@ for n = 1:n_sensors
         P4 = (1/(Fs*np))*abs(W).^2;
         P3 = P4(1:np/2+1);
         P3(2:end-1) = 2*P3(2:end-1);
+        
+        zi = zi + 1;
+        zp1 = 200 + zi;
+        figure(zp1)
+        set(gcf, 'Position', get(0, 'Screensize'));
+        savename = [tube_format_r, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+        %title([tube_format_r,' Sensor ', num2str(n), ' - Power: ', num2str(floor(power(p))), ' W'])       
+        plot(Zp)
+        title(savename)
+        xlabel('Time [s]')
+        ylabel('Temperature [\circC]')
+        grid on
+        set(gca,'FontSize',16)       
+        saveas(zp1,fullfile(store_path, savename),'png')
+        close
         
         % Normalize graphic
         P1max = max(P1(1:np/2+1));
@@ -205,15 +259,12 @@ for n = 1:n_sensors
         end
         ymax = 100*ceil(Pmax/100);
         
-        if p <= max_power_index
-            ascdesc = 'A';
-        else
-            ascdesc = 'D';
-        end
+        
         
         % Plot
         if n == 1
-            figure(p)
+            h1 = p;
+            figure(h1)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
@@ -230,7 +281,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,2)
             plot(f,P3(1:np/2+1),'b')            
@@ -244,10 +295,11 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)            
+            set(gca,'FontSize',16)            
             
         elseif n == 6
-            figure(p)
+            h1 = p;
+            figure(h1)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
@@ -263,7 +315,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,4)
             plot(f,P3(1:np/2+1),'b')
@@ -277,10 +329,11 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end          
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
         elseif n == 9
-            figure(p)
+            h1 = p;
+            figure(h1)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
@@ -296,7 +349,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,6)
             plot(f,P3(1:np/2+1),'b')
@@ -310,16 +363,18 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
                                
             savename = ['Group 169 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
-            saveas(p,fullfile(store_path, savename),'tiffn')
+            saveas(h1,fullfile(store_path, savename),'png')
+            close
         end
         %suptitle(['Power: ', num2str(floor(power(p))), ' W'])
         
         if n == 3
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
-            figure(p+20)
+            h2 = p+20;
+            figure(h2)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
@@ -334,7 +389,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,2)
             plot(f,P3(1:np/2+1),'b')
@@ -348,11 +403,13 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
         elseif n == 7
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
-            figure(p+20)
+%             figure(p+20)
+            h2 = p+20;
+            figure(h2)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
@@ -367,7 +424,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,4)
             plot(f,P3(1:np/2+1),'b')
@@ -381,10 +438,12 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
         elseif n == 11
-            figure(p+20)
+%             figure(p+20)
+            h2 = p+20;
+            figure(h2)
             set(gcf, 'Position', get(0, 'Screensize'));
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
             subplot(3,2,5)
@@ -399,7 +458,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,6)
             plot(f,P3(1:np/2+1),'b')
@@ -413,16 +472,19 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             savename = ['Group 3711 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
-            saveas(p,fullfile(store_path, savename),'tiffn')
+            saveas(h2,fullfile(store_path, savename),'png')
+            close
         end
         %suptitle(['Power: ', num2str(floor(power(p))), ' W'])
         
         if n == 5
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
-            figure(p+40)
+            h3 = p+40;
+            figure(h3)
+%             figure(p+40)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
@@ -437,7 +499,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,2)
             plot(f,P3(1:np/2+1),'b')
@@ -451,11 +513,13 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
         elseif n == 8
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
-            figure(p+40)
+            h3 = p+40;
+            figure(h3)
+%             figure(p+40)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
@@ -470,7 +534,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,4)
             plot(f,P3(1:np/2+1),'b')
@@ -484,11 +548,13 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
         elseif n == 13
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
-            figure(p+40)
+            h3 = p+40;
+            figure(h3)
+%             figure(p+40)
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,5)
@@ -504,7 +570,7 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             subplot(3,2,6)
             plot(f,P3(1:np/2+1),'b')
@@ -519,10 +585,11 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',12)
+            set(gca,'FontSize',16)
             
             savename = ['Group 5813 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
-            saveas(p,fullfile(store_path, savename),'tiffn')
+            saveas(h3,fullfile(store_path, savename),'png')
+            close
             
         end
         %suptitle(['Power: ', num2str(floor(power(p))), ' W'])
@@ -541,3 +608,4 @@ for n = 1:n_sensors
     
     
 end
+toc
