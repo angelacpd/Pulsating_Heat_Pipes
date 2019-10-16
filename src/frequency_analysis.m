@@ -29,15 +29,15 @@ clearvars; clc; close all;
 %% Inputs
 
 % Data to be shown on the left side of the graphic.
-filename_l = 'inverted_circular_26canais_3mm_RP60.txt';
+filename_l = 'inverted_circular_26canais_3mm_RP50.txt';
 % Data to be shown on the right side of the graphic.
-filename_r = 'inverted_grooved_26canais_3mm_RP60.txt';
+filename_r = 'inverted_grooved_26canais_3mm_RP50.txt';
 delimiterIn = ' ';
 headerlinesIn = 1;
 
 xlim_on = 1; % 0 = Off. 1 = On.
 ylim_on = 1; % 0 = Off. 1 = On.
-xmax = 0.2;
+xmax = 0.1;
 
 Fs = 1;     % Sampling frequency
 n_sensors = 13;     % Number of sensors
@@ -68,7 +68,7 @@ rp = cell2mat(rp_cell(1));
 
 % Create folder to store graphics
 position = cell2mat(filename_l_split(1));
-folder_name = [position, '_', rp, '_png'];
+folder_name = [position, '_', rp, '_png_steady'];
 [status, msg, msgID] = mkdir(['graphics\',folder_name]);
 store_path = ['graphics\',folder_name];
 
@@ -95,7 +95,7 @@ for i = 1:n_sensors
     
     f1 = 100 + (2*i - 1);
     figure(f1)
-    set(gcf, 'Position', get(0, 'Screensize'));
+    set(f1, 'Position', get(0, 'Screensize'));
     savename = [tube_format_l, ' sensor T', num2str(i)];
     title(savename)
     yyaxis left
@@ -113,7 +113,7 @@ for i = 1:n_sensors
     
     f2 = 100 + 2*i;
     figure(f2)
-    set(gcf, 'Position', get(0, 'Screensize'));
+    set(f2, 'Position', get(0, 'Screensize'));
     savename = [tube_format_r, ' sensor T', num2str(i)];
     title(savename)
     yyaxis left
@@ -200,7 +200,7 @@ for n = 1:n_sensors
         
         % Power Spectrum Density 
         % Left
-        Xp = level_l(1:end-1,p);
+        Xp = level_l(200:end-1,p);
         Xp = Xp - mean(Xp);
         np = 2^nextpow2(length(level_l(:,p)));
         f = Fs*(0:(np/2))/np;
@@ -212,7 +212,7 @@ for n = 1:n_sensors
         xi = xi + 1;
         xp1 = 200 + xi;
         figure(xp1)
-        set(gcf, 'Position', get(0, 'Screensize'));
+        set(xp1, 'Position', get(0, 'Screensize'));
         savename = [tube_format_l, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
         %title([tube_format_l,' Sensor ', num2str(n), ' - Power: ', num2str(floor(power(p))), ' W'])       
         plot(Xp)
@@ -225,7 +225,7 @@ for n = 1:n_sensors
         close
         
         % Right
-        Zp = level_r(1:end-1,p);
+        Zp = level_r(200:end-1,p);
         Zp = Zp - mean(Zp);
         %np = 2^nextpow2(length(level_l(:,p)));
         %f = Fs*(0:(np/2))/np;
@@ -237,7 +237,7 @@ for n = 1:n_sensors
         zi = zi + 1;
         zp1 = 200 + zi;
         figure(zp1)
-        set(gcf, 'Position', get(0, 'Screensize'));
+        set(zp1, 'Position', get(0, 'Screensize'));
         savename = [tube_format_r, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
         %title([tube_format_r,' Sensor ', num2str(n), ' - Power: ', num2str(floor(power(p))), ' W'])       
         plot(Zp)
@@ -250,30 +250,34 @@ for n = 1:n_sensors
         close
         
         % Normalize graphic
-        P1max = max(P1(1:np/2+1));
-        P3max = max(P3(1:np/2+1));
+        [P1max,P1max_ind] = max(P1(1:np/2+1));
+        [P3max,P3max_ind] = max(P3(1:np/2+1));
         if P1max > P3max
             Pmax = P1max;
         else
             Pmax = P3max;
         end
         ymax = 100*ceil(Pmax/100);
-        
+        ystep = ymax/5;
         
         
         % Plot
         if n == 1
             h1 = p;
             figure(h1)
+            %set(gcf, 'Position', get(0, 'Screensize'),'Visible','off');
             set(gcf, 'Position', get(0, 'Screensize'));
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             %title({['Circular', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]}, 'Fontsize',20)
             title({'Circular';['Sensor T', num2str(n)]})
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
+            %xticklabels({})
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -281,13 +285,17 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
-            set(gca,'FontSize',16)
+            hold on
+            plot(f(P1max_ind),P1max,'r*')
+            set(gca,'FontSize', 16)
             
             subplot(3,2,2)
-            plot(f,P3(1:np/2+1),'b')            
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)            
             title({'Grooved';['Sensor T', num2str(n)]})
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -295,6 +303,8 @@ for n = 1:n_sensors
             if ylim_on == 1
                 ylim([0 ymax])
             end
+            hold on
+            plot(f(P3max_ind),P3max,'r*')
             set(gca,'FontSize',16)            
             
         elseif n == 6
@@ -304,10 +314,12 @@ for n = 1:n_sensors
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,3)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -318,10 +330,12 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,4)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -338,10 +352,12 @@ for n = 1:n_sensors
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,5)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -352,10 +368,12 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,6)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -378,10 +396,12 @@ for n = 1:n_sensors
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             title({'Circular';['Sensor T', num2str(n)]})         
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -392,10 +412,12 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,2)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             title({'Grooved';['Sensor T', num2str(n)]})
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -413,10 +435,12 @@ for n = 1:n_sensors
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -427,10 +451,12 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,4)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -447,10 +473,12 @@ for n = 1:n_sensors
             set(gcf, 'Position', get(0, 'Screensize'));
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
             subplot(3,2,5)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -461,10 +489,12 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,6)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -488,10 +518,12 @@ for n = 1:n_sensors
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             title({'Circular';['Sensor T', num2str(n)]})
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -502,10 +534,12 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,2)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             title({'Grooved';['Sensor T', num2str(n)]})
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -523,10 +557,12 @@ for n = 1:n_sensors
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -537,10 +573,12 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,4)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -558,11 +596,13 @@ for n = 1:n_sensors
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,5)
-            plot(f,P1(1:np/2+1),'b')
+            plot(f,P1(1:np/2+1),'b','LineWidth',1)
             ylim([0 800])
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
@@ -573,11 +613,13 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             subplot(3,2,6)
-            plot(f,P3(1:np/2+1),'b')
+            plot(f,P3(1:np/2+1),'b','LineWidth',1)
             ylim([0 800])
             title(['Sensor T', num2str(n)])
             xlabel('Frequency [Hz]')
             ylabel('Magnitude')
+            xticks(0:xmax/10:xmax)
+            yticks(0:ystep:ymax)
             grid on
             if xlim_on == 1
                 xlim([0 xmax])
