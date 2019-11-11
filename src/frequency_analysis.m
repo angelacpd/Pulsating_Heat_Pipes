@@ -68,7 +68,7 @@ rp = cell2mat(rp_cell(1));
 
 % Create folder to store graphics
 position = cell2mat(filename_l_split(1));
-folder_name = [position, '_', rp, '_png_steady'];
+folder_name = [position, '_', rp, '_steady'];
 [status, msg, msgID] = mkdir(['graphics\',folder_name]);
 store_path = ['graphics\',folder_name];
 
@@ -93,40 +93,40 @@ for i = 1:n_sensors
     temp_l(:,i) = data_l.data(2:end,i+2);
     temp_r(:,i) = data_r.data(2:end,i+2);
     
-    f1 = 100 + (2*i - 1);
-    figure(f1)
-    set(f1, 'Position', get(0, 'Screensize'));
-    savename = [tube_format_l, ' sensor T', num2str(i)];
-    title(savename)
-    yyaxis left
-    plot(time_v_l,temp_l(:,i))
-    ylabel('Temperature [\circC]')
-    yyaxis right
-    plot(time_v_l,power_v_l)
-    xlabel('Time [s]')
-    ylabel('Power [W]')
-    grid on
-    set(gca,'FontSize',16)
-    
-    saveas(f1,fullfile(store_path, savename),'png')
-    close
-    
-    f2 = 100 + 2*i;
-    figure(f2)
-    set(f2, 'Position', get(0, 'Screensize'));
-    savename = [tube_format_r, ' sensor T', num2str(i)];
-    title(savename)
-    yyaxis left
-    plot(time_v_r,temp_r(:,i))
-    ylabel('Temperature [\circC]')
-    yyaxis right
-    plot(time_v_r,power_v_r)
-    xlabel('Time [s]')
-    ylabel('Power [W]')
-    grid on
-    set(gca,'FontSize',16)   
-    saveas(f2,fullfile(store_path, savename),'png')
-    close
+%     f1 = 100 + (2*i - 1);
+%     figure(f1)
+%     set(f1, 'Position', get(0, 'Screensize'));
+%     savename = [tube_format_l, ' sensor T', num2str(i)];
+%     title(savename)
+%     yyaxis left
+%     plot(time_v_l,temp_l(:,i))
+%     ylabel('Temperature [\circC]')
+%     yyaxis right
+%     plot(time_v_l,power_v_l)
+%     xlabel('Time [s]')
+%     ylabel('Power [W]')
+%     grid on
+%     set(gca,'FontSize',16)
+%     
+%     saveas(f1,fullfile(store_path, savename),'png')
+%     close
+%     
+%     f2 = 100 + 2*i;
+%     figure(f2)
+%     set(f2, 'Position', get(0, 'Screensize'));
+%     savename = [tube_format_r, ' sensor T', num2str(i)];
+%     title(savename)
+%     yyaxis left
+%     plot(time_v_r,temp_r(:,i))
+%     ylabel('Temperature [\circC]')
+%     yyaxis right
+%     plot(time_v_r,power_v_r)
+%     xlabel('Time [s]')
+%     ylabel('Power [W]')
+%     grid on
+%     set(gca,'FontSize',16)   
+%     saveas(f2,fullfile(store_path, savename),'png')
+%     close
 end
 
 
@@ -144,7 +144,8 @@ g = 1;
 h = 0;
 flag_r = 0;
 
-for n = 1:n_sensors
+for n = 1
+% for n = 1:n_sensors
     
     while (flag == 0)
         k = k+1;
@@ -198,16 +199,21 @@ for n = 1:n_sensors
             ascdesc = 'DESC';
         end
         
+        %steady_len = floor(length(level_l(:,p))/2);
+        steady_len = 450;
+        np = 2^nextpow2(length(level_l(steady_len:end-1,p)));
         % Power Spectrum Density 
         % Left
-        Xp = level_l(200:end-1,p);
-        Xp = Xp - mean(Xp);
-        np = 2^nextpow2(length(level_l(:,p)));
+        Xp = level_l(steady_len:end-1,p);
+        Xp = Xp - mean(Xp);       
         f = Fs*(0:(np/2))/np;
         Y = fft(Xp);
         P2 = (1/(Fs*np))*abs(Y).^2;
         P1 = P2(1:np/2+1);
         P1(2:end-1) = 2*P1(2:end-1);
+        
+        %TF = islocalmax(P1);
+        %[P1_ind, P1_max_v] = get_local_max(P1(2:end-1));
         
         xi = xi + 1;
         xp1 = 200 + xi;
@@ -225,7 +231,7 @@ for n = 1:n_sensors
         close
         
         % Right
-        Zp = level_r(200:end-1,p);
+        Zp = level_r(steady_len:end-1,p);
         Zp = Zp - mean(Zp);
         %np = 2^nextpow2(length(level_l(:,p)));
         %f = Fs*(0:(np/2))/np;
@@ -233,6 +239,8 @@ for n = 1:n_sensors
         P4 = (1/(Fs*np))*abs(W).^2;
         P3 = P4(1:np/2+1);
         P3(2:end-1) = 2*P3(2:end-1);
+        
+        %[P3_ind, P3_max_v] = get_local_max(P3(2:end-1));
         
         zi = zi + 1;
         zp1 = 200 + zi;
@@ -260,6 +268,7 @@ for n = 1:n_sensors
         ymax = 100*ceil(Pmax/100);
         ystep = ymax/5;
         
+        TF = islocalmax(P1);        
         
         % Plot
         if n == 1
@@ -286,7 +295,13 @@ for n = 1:n_sensors
                 ylim([0 ymax])
             end
             hold on
-            plot(f(P1max_ind),P1max,'r*')
+            % plot(f(P1max_ind),P1max,'r*')
+            plot(f(TF),P1(TF),'r*')
+            a = f(TF);
+            b = P1(TF);
+            txt = ['\leftarrow (' num2str(a(1)) ', ' num2str(b(1)) ')'];
+            text(a(1),b(1),txt)
+            % legend(num2str(a(1)))
             set(gca,'FontSize', 16)
             
             subplot(3,2,2)
@@ -384,6 +399,7 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
                                
             savename = ['Group 169 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+            saveas(h1,fullfile(store_path, savename),'fig')
             saveas(h1,fullfile(store_path, savename),'png')
             close
         end
@@ -505,6 +521,7 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             savename = ['Group 3711 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+            saveas(h2,fullfile(store_path, savename),'fig')
             saveas(h2,fullfile(store_path, savename),'png')
             close
         end
@@ -630,6 +647,7 @@ for n = 1:n_sensors
             set(gca,'FontSize',16)
             
             savename = ['Group 5813 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
+            saveas(h3,fullfile(store_path, savename),'fig')
             saveas(h3,fullfile(store_path, savename),'png')
             close
             
@@ -646,8 +664,7 @@ for n = 1:n_sensors
     clear level_r 
     clear power
     clear temp_power
-    
-    
+       
     
 end
 toc
