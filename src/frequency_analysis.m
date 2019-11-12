@@ -234,7 +234,7 @@ for n = 1
         Zp = level_r(steady_len:end-1,p);
         Zp = Zp - mean(Zp);
         %np = 2^nextpow2(length(level_l(:,p)));
-        %f = Fs*(0:(np/2))/np;
+        %f2 = Fs*(0:(np/2))/np;
         W = fft(Zp);
         P4 = (1/(Fs*np))*abs(W).^2;
         P3 = P4(1:np/2+1);
@@ -268,7 +268,13 @@ for n = 1
         ymax = 100*ceil(Pmax/100);
         ystep = ymax/5;
         
-        TF = islocalmax(P1);        
+        TF1 = islocalmax(P1);
+        TF3 = islocalmax(P3);
+
+        c = f(TF3);
+        d = P3(TF3);
+        
+        
         
         % Plot
         if n == 1
@@ -279,48 +285,50 @@ for n = 1
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            %title({['Circular', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]}, 'Fontsize',20)
-            title({'Circular';['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            %xticklabels({})
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            hold on
-            % plot(f(P1max_ind),P1max,'r*')
-            plot(f(TF),P1(TF),'r*')
-            a = f(TF);
-            b = P1(TF);
-            txt = ['\leftarrow (' num2str(a(1)) ', ' num2str(b(1)) ')'];
-            text(a(1),b(1),txt)
-            % legend(num2str(a(1)))
-            set(gca,'FontSize', 16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             %title({['Circular', ' - Power: ', num2str(floor(power(p))), ' W'];['Sensor T', num2str(n)]}, 'Fontsize',20)
+%             title({'Circular';['Sensor T', num2str(n)]})
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             %xticklabels({})
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             hold on
+%             % plot(f(P1max_ind),P1max,'r*')
+%             plot(f(TF1),P1(TF1),'r*')
+%             
+%             txt = ['\leftarrow (' num2str(a(1)) ', ' num2str(b(1)) ')'];
+%             text(a(1),b(1),txt,'FontSize',14)
+%             % legend(num2str(a(1)))
+%             set(gca,'FontSize', 16)
             
             subplot(3,2,2)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)            
-            title({'Grooved';['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            hold on
-            plot(f(P3max_ind),P3max,'r*')
-            set(gca,'FontSize',16)            
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)            
+%             title({'Grooved';['Sensor T', num2str(n)]})
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             hold on
+%             %plot(f(P3max_ind),P3max,'r*')
+%             plot(f(TF1),P3(TF1),'r*')
+%             set(gca,'FontSize',16)            
             
         elseif n == 6
             h1 = p;
@@ -329,36 +337,38 @@ for n = 1
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,3)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,4)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end          
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end          
+%             set(gca,'FontSize',16)
             
         elseif n == 9
             h1 = p;
@@ -367,36 +377,38 @@ for n = 1
             
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p)
             subplot(3,2,5)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,6)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
                                
             savename = ['Group 169 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
             saveas(h1,fullfile(store_path, savename),'fig')
@@ -412,36 +424,38 @@ for n = 1
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            title({'Circular';['Sensor T', num2str(n)]})         
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             title({'Circular';['Sensor T', num2str(n)]})         
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,2)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            title({'Grooved';['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             title({'Grooved';['Sensor T', num2str(n)]})
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
         elseif n == 7
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
@@ -451,36 +465,38 @@ for n = 1
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,4)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
         elseif n == 11
 %             figure(p+20)
@@ -489,36 +505,38 @@ for n = 1
             set(gcf, 'Position', get(0, 'Screensize'));
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+20)
             subplot(3,2,5)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,6)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             savename = ['Group 3711 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
             saveas(h2,fullfile(store_path, savename),'fig')
@@ -535,36 +553,38 @@ for n = 1
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            title({'Circular';['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             title({'Circular';['Sensor T', num2str(n)]})
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,2)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            title({'Grooved';['Sensor T', num2str(n)]})
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             title({'Grooved';['Sensor T', num2str(n)]})
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
         elseif n == 8
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
@@ -574,36 +594,38 @@ for n = 1
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,4)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
         elseif n == 13
             %figure('Name',[folder_name,' - Power: ', num2str(floor(power(p))), ' W'],'NumberTitle',p+40)
@@ -613,38 +635,40 @@ for n = 1
             set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,5)
-            plot(f,P1(1:np/2+1),'b','LineWidth',1)
-            ylim([0 800])
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_l(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+%             plot(f,P1(1:np/2+1),'b','LineWidth',1)
+%             ylim([0 800])
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             subplot(3,2,6)
-            plot(f,P3(1:np/2+1),'b','LineWidth',1)
-            ylim([0 800])
-            title(['Sensor T', num2str(n)])
-            xlabel('Frequency [Hz]')
-            ylabel('Magnitude')
-            xticks(0:xmax/10:xmax)
-            yticks(0:ystep:ymax)
-            grid on
-            if xlim_on == 1
-                xlim([0 xmax])
-            end
-            if ylim_on == 1
-                ylim([0 ymax])
-            end
-            set(gca,'FontSize',16)
+            plot_psd_r(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+%             plot(f,P3(1:np/2+1),'b','LineWidth',1)
+%             ylim([0 800])
+%             title(['Sensor T', num2str(n)])
+%             xlabel('Frequency [Hz]')
+%             ylabel('Magnitude')
+%             xticks(0:xmax/10:xmax)
+%             yticks(0:ystep:ymax)
+%             grid on
+%             if xlim_on == 1
+%                 xlim([0 xmax])
+%             end
+%             if ylim_on == 1
+%                 ylim([0 ymax])
+%             end
+%             set(gca,'FontSize',16)
             
             savename = ['Group 5813 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
             saveas(h3,fullfile(store_path, savename),'fig')
