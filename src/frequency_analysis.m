@@ -23,26 +23,26 @@
 % Florianopolis - Brazil
 
 tic
-%% Clear workspace; clear command window; close windows.
+%% Clear variables; clear command window; close windows.
 clearvars; clc; close all;
 
 %% Inputs
 
 % Data to be shown on the left side of the graphic.
-filename_l = 'vertical_circular_26canais_3mm_RP50.txt';
+filename_l = 'inverted_circular_26canais_3mm_RP50.txt';
 % Data to be shown on the right side of the graphic.
-filename_r = 'vertical_grooved_26canais_3mm_RP50.txt';
+filename_r = 'inverted_grooved_26canais_3mm_RP50.txt';
 delimiterIn = ' ';
 headerlinesIn = 1;
 
 xlim_on = 1; % 0 = Off. 1 = On.
 ylim_on = 1; % 0 = Off. 1 = On.
-xmax = 0.1;
+xmax = 0.1; % Limit x axis.
 
-Fs = 1;     % Sampling frequency
-n_sensors = 13;     % Number of sensors
+Fs = 1; % Sampling frequency
+n_sensors = 1; % Number of sensors
 
-steady_len = 450;
+steady_len = 450; % Get the last samples of each power level.
 
 %% Import text files.
 
@@ -52,6 +52,8 @@ data_l = importdata(filename_l,delimiterIn,headerlinesIn);
 filename_l_split = split(filename_l,'_');
 tube_format_l_cell = filename_l_split(2);
 tube_format_l = cell2mat(tube_format_l_cell);
+% Verify if the tube in the left is circular.
+tube_l = strcmp(tube_format_l, 'circular');
 
 % Right
 data_r = importdata(filename_r,delimiterIn,headerlinesIn);
@@ -59,12 +61,16 @@ data_r = importdata(filename_r,delimiterIn,headerlinesIn);
 filename_r_split = split(filename_r,'_');
 tube_format_r_cell = filename_r_split(2);
 tube_format_r = cell2mat(tube_format_r_cell);
+% Verify if the tube in the right is grooved.
+tube_r = strcmp(tube_format_r, 'grooved');
 
-%if tube_format_l ~= 'circular' && tube_format_r ~= 'ranhurado'
-%    msg = 'File error. Tube 1 shall be circular and Tube 2 shall be grooved.';
-%    error(msg)
-%end
+% Throw error alert if files do not match and stop script.
+if tube_l == 0 || tube_r == 0
+   msg = 'Input error. Tube 1 shall be circular and Tube 2 shall be grooved.';
+   error(msg)
+end
 
+% Get filling ratio.
 rp_cell = split(filename_l_split(5),'.');
 rp = cell2mat(rp_cell(1));
 
@@ -73,10 +79,6 @@ position = cell2mat(filename_l_split(1));
 folder_name = [position, '_', rp, '_steady'];
 [status, msg, msgID] = mkdir(['graphics\',folder_name]);
 store_path = ['graphics\',folder_name];
-
-%nome = data_l.colheaders;
-%t = tempo - tempo(2);
-%T_amb = data_l.data(2:end,2);
 
 time_v_l = data_l.data(2:end,1);      % Time vector.
 power_v_l = data_l.data(2:end,24);    % Power vector.
@@ -108,8 +110,7 @@ for i = 1:n_sensors
     xlabel('Time [s]')
     ylabel('Power [W]')
     grid on
-    set(gca,'FontSize',16)
-    
+    set(gca,'FontSize',16)    
     saveas(f1,fullfile(store_path, savename),'png')
     close
     
@@ -129,8 +130,10 @@ for i = 1:n_sensors
     set(gca,'FontSize',16)   
     saveas(f2,fullfile(store_path, savename),'png')
     close
+    
+    filter_signal(temp_l(:,i))
+    filter_signal(temp_r(:,i))
 end
-
 
 %% Split temperature vectors according to the power level.
 j = 1;
@@ -138,16 +141,10 @@ m = 1;
 k = 0;
 flag = 0;
 
-xi = 0;
-zi = 0;
+% xi = 0;
+% zi = 0;
 fi = 0;
 
-f = 1;
-g = 1;
-h = 0;
-flag_r = 0;
-
-% for n = 1
 for n = 1:n_sensors
     
     while (flag == 0)
@@ -172,15 +169,7 @@ for n = 1:n_sensors
                 else
                     m = m + 1;
                     power(m) = power_v_l(k+3);
-                end
-                
-%                 if level_r(5:end,m) == 0
-%                     level_r(:,m) = [];
-%                 else
-%                     m = m + 1;
-%                     power_r(m) = power_v_r(k+3);
-%                 end
-                
+                end                            
                 j = 1;
             end
         end
@@ -220,22 +209,15 @@ for n = 1:n_sensors
         P1(2:end-1) = 2*P1(2:end-1);
         
         
-        xi = xi + 1;
-        xp1 = 200 + xi;
+%         xi = xi + 1;
+%         xp1 = 200 + xi;
 %         figure(xp1)
         figure(fi)
 %         set(xp1, 'Position', get(0, 'Screensize'));
         set(fi, 'Position', get(0, 'Screensize'));
         savename = [tube_format_l, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];      
         plot_time_domain_seg(Xp, fi, savename, store_path)
-%         plot(Xp)
-%         title(savename)
-%         xlabel('Time [s]')
-%         ylabel('Temperature [\circC]')
-%         grid on
-%         set(gca,'FontSize',16)       
-%         saveas(xp1,fullfile(store_path, savename),'png')
-        close
+        close              
         
         % Right
         Zp = level_r(steady_len:end-1,p);
@@ -245,22 +227,16 @@ for n = 1:n_sensors
         P3 = P4(1:np/2+1);
         P3(2:end-1) = 2*P3(2:end-1);
         
-        zi = zi + 1;
-        zp1 = 200 + zi;
+%         zi = zi + 1;
+%         zp1 = 200 + zi;
 %         figure(zp1)
         figure(fi)
 %         set(zp1, 'Position', get(0, 'Screensize'));
         set(fi, 'Position', get(0, 'Screensize'));
         savename = [tube_format_r, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];   
         plot_time_domain_seg(Zp, fi, savename, store_path)
-%         plot(Zp)
-%         title(savename)
-%         xlabel('Time [s]')
-%         ylabel('Temperature [\circC]')
-%         grid on
-%         set(gca,'FontSize',16)       
-%         saveas(zp1,fullfile(store_path, savename),'png')
         close
+        
         
         
         %% Plot PSD

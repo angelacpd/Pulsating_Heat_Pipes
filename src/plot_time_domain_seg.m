@@ -7,6 +7,5 @@ ylabel('Temperature [\circC]')
 grid on
 set(gca,'FontSize',16)
 saveas(fi, fullfile(store_path, savename),'png')
-%close
 
 end

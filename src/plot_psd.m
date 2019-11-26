@@ -13,21 +13,28 @@ end
 if ylim_on == 1
     ylim([0 ymax])
 end
-a = f(TF);
-b = P(TF);
 hold on
 
-l = min([10, length(a)]);
-%l = length(a);
-format_a = zeros(l,1);
-format_b = zeros(l,1);
-for k = 1:l
-    plot(a(k),b(k),'r*')
-    format_a(k) = round(a(k)*10000)/10000;
-    format_b(k) = round(b(k));
-    txt = ['\leftarrow (' num2str(format_a(k)) ', ' num2str(format_b(k)) ')'];    
-    text(a(k),b(k),txt,'FontSize',14)
+plot_points = 0;
+if plot_points == 1
+    % Get vector of local maximum points.
+    a = f(TF); % Frequency
+    b = P(TF); % Power
+    l = min([20, length(a)]);
+    format_a = zeros(l,1);
+    format_b = zeros(l,1);
+    for k = 1:l
+        % Plot local maximum points
+        plot(a(k),b(k),'r*')
+        format_a(k) = round(a(k)*10000)/10000;
+        format_b(k) = round(b(k));
+        txt = ['\leftarrow (' num2str(format_a(k)) ', ' num2str(format_b(k)) ')'];
+        % Write the coordinates of local maximum points on graphic.
+        text(a(k),b(k),txt,'FontSize',14)
+    end
 end
+
+% Set font size of graphic axes.
 set(gca,'FontSize', 16)
 
 end
