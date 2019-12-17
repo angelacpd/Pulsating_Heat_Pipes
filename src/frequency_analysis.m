@@ -40,9 +40,9 @@ ylim_on = 1; % 0 = Off. 1 = On.
 xmax = 0.1; % Limit x axis.
 
 Fs = 1; % Sampling frequency
-n_sensors = 1; % Number of sensors
+n_sensors = 13; % Number of sensors
 
-steady_len = 450; % Get the last samples of each power level.
+steady_len = 300; % Get the last samples of each power level.
 
 %% Import text files.
 
@@ -69,6 +69,9 @@ if tube_l == 0 || tube_r == 0
    msg = 'Input error. Tube 1 shall be circular and Tube 2 shall be grooved.';
    error(msg)
 end
+
+tube_for_l = "Round";
+tube_for_r = "Grooved";
 
 % Get filling ratio.
 rp_cell = split(filename_l_split(5),'.');
@@ -97,42 +100,42 @@ for i = 1:n_sensors
     temp_l(:,i) = data_l.data(2:end,i+2);
     temp_r(:,i) = data_r.data(2:end,i+2);
     
-    f1 = 100 + (2*i - 1);
-    figure(f1)
-    set(f1, 'Position', get(0, 'Screensize'));
-    savename = [tube_format_l, ' sensor T', num2str(i)];
-    title(savename)
-    yyaxis left
-    plot(time_v_l,temp_l(:,i))
-    ylabel('Temperature [\circC]')
-    yyaxis right
-    plot(time_v_l,power_v_l)
-    xlabel('Time [s]')
-    ylabel('Power [W]')
-    grid on
-    set(gca,'FontSize',16)    
-    saveas(f1,fullfile(store_path, savename),'png')
-    close
+%     f1 = 100 + (2*i - 1);
+%     figure(f1)
+%     set(f1, 'Position', get(0, 'Screensize'));
+%     savename = [tube_format_l, ' sensor T', num2str(i)];
+%     title(savename)
+%     yyaxis left
+%     plot(time_v_l,temp_l(:,i))
+%     ylabel('Temperature [\circC]')
+%     yyaxis right
+%     plot(time_v_l,power_v_l)
+%     xlabel('Time [s]')
+%     ylabel('Power [W]')
+%     grid on
+%     set(gca,'FontSize',16)    
+%     saveas(f1,fullfile(store_path, savename),'png')
+%     close
+%     
+%     f2 = 100 + 2*i;
+%     figure(f2)
+%     set(f2, 'Position', get(0, 'Screensize'));
+%     savename = [tube_format_r, ' sensor T', num2str(i)];
+%     title(savename)
+%     yyaxis left
+%     plot(time_v_r,temp_r(:,i))
+%     ylabel('Temperature [\circC]')
+%     yyaxis right
+%     plot(time_v_r,power_v_r)
+%     xlabel('Time [s]')
+%     ylabel('Power [W]')
+%     grid on
+%     set(gca,'FontSize',16)   
+%     saveas(f2,fullfile(store_path, savename),'png')
+%     close
     
-    f2 = 100 + 2*i;
-    figure(f2)
-    set(f2, 'Position', get(0, 'Screensize'));
-    savename = [tube_format_r, ' sensor T', num2str(i)];
-    title(savename)
-    yyaxis left
-    plot(time_v_r,temp_r(:,i))
-    ylabel('Temperature [\circC]')
-    yyaxis right
-    plot(time_v_r,power_v_r)
-    xlabel('Time [s]')
-    ylabel('Power [W]')
-    grid on
-    set(gca,'FontSize',16)   
-    saveas(f2,fullfile(store_path, savename),'png')
-    close
-    
-    filter_signal(temp_l(:,i))
-    filter_signal(temp_r(:,i))
+    %filter_signal(temp_l(:,i))
+    %filter_signal(temp_r(:,i))
 end
 
 %% Split temperature vectors according to the power level.
@@ -193,6 +196,8 @@ for n = 1:n_sensors
         
         % Time domain figures
         fi = fi + 200; 
+        ftx = 200 + 2*p - 2;
+        ftz = 200 + 2*p - 1;
         
         %% Compute Power Spectrum Density 
         
@@ -201,43 +206,62 @@ for n = 1:n_sensors
         f = Fs*(0:(np/2))/np;
         
         % Left
-        Xp = level_l(steady_len:end-1,p);
-        Xp = Xp - mean(Xp);               
+        Xp1 = level_l(steady_len:end-1,p);
+        Xp = Xp1 - mean(Xp1);               
         Y = fft(Xp);
         P2 = (1/(Fs*np))*abs(Y).^2;
         P1 = P2(1:np/2+1);
         P1(2:end-1) = 2*P1(2:end-1);
+                     
         
-        
-%         xi = xi + 1;
-%         xp1 = 200 + xi;
-%         figure(xp1)
-        figure(fi)
-%         set(xp1, 'Position', get(0, 'Screensize'));
-        set(fi, 'Position', get(0, 'Screensize'));
-        savename = [tube_format_l, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];      
-        plot_time_domain_seg(Xp, fi, savename, store_path)
-        close              
+        %filter_signal(Xp)
         
         % Right
-        Zp = level_r(steady_len:end-1,p);
-        Zp = Zp - mean(Zp);
+        Zp1 = level_r(steady_len:end-1,p);
+        Zp = Zp1 - mean(Zp1);
         W = fft(Zp);
         P4 = (1/(Fs*np))*abs(W).^2;
         P3 = P4(1:np/2+1);
         P3(2:end-1) = 2*P3(2:end-1);
         
-%         zi = zi + 1;
-%         zp1 = 200 + zi;
-%         figure(zp1)
-        figure(fi)
-%         set(zp1, 'Position', get(0, 'Screensize'));
-        set(fi, 'Position', get(0, 'Screensize'));
-        savename = [tube_format_r, ' sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];   
-        plot_time_domain_seg(Zp, fi, savename, store_path)
+        
+        
+        % Normalize graphics
+        [xp1max,xp1max_ind] = max(Xp1);
+        [zp1max,zp1max_ind] = max(Zp1);
+        if xp1max > zp1max
+            yt_max = xp1max;
+        else
+            yt_max = zp1max;
+        end
+
+        yt_max = 5*ceil(yt_max/5);
+        
+        [xp1min,xp1min_ind] = min(Xp1);
+        [zp1min,zp1min_ind] = min(Zp1);
+        if xp1min < zp1min
+            yt_min = xp1min;
+        else
+            yt_min = zp1min;
+        end
+
+        yt_min = 5*floor(yt_min/5);
+   
+        figure(ftx)
+        set(ftx, 'Position', get(0, 'Screensize'));
+        savename = ['Round - Sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];      
+        title_str = ['Round - Sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W'];
+        plot_time_domain_seg(Xp1, ftx, title_str, savename, store_path, yt_min, yt_max)
+        close 
+        
+        figure(ftz)
+        set(ftz, 'Position', get(0, 'Screensize'));
+        savename = ['Grooved - Sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W - ', ascdesc];  
+        title_str = ['Grooved - Sensor T', num2str(n), ' - Power ', num2str(floor(power(p))), ' W']; 
+        plot_time_domain_seg(Zp1, ftz, title_str, savename, store_path, yt_min, yt_max)
         close
         
-        
+        %filter_signal(Zp)
         
         %% Plot PSD
         
@@ -249,48 +273,46 @@ for n = 1:n_sensors
         else
             Pmax = P3max;
         end
-        ymax = 100*ceil(Pmax/100);
-        ystep = ymax/5;
+%         ymax = 100*ceil(Pmax/100);
+        ymax = 10*ceil(Pmax/10);
+        
         
         % Compute local maximum points
         TF1 = islocalmax(P1);
         TF3 = islocalmax(P3);
-               
+        
         if n == 1
             h1 = p;
             figure(h1)
-            set(gcf, 'Position', get(0, 'Screensize'));
-            
+                       
             subplot(3,2,1)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
            
             subplot(3,2,2)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)         
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)         
             
         elseif n == 6
             h1 = p;
             figure(h1)
-            set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,4)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
             
         elseif n == 9
             h1 = p;
             figure(h1)
-            set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,5)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,6)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
                                
             savename = ['Group 169 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
-            saveas(h1,fullfile(store_path, savename),'fig')
+%             saveas(h1,fullfile(store_path, savename),'fig')
             saveas(h1,fullfile(store_path, savename),'png')
             close
         end
@@ -299,38 +321,35 @@ for n = 1:n_sensors
         if n == 3
             h2 = p+20;
             figure(h2)
-            set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,2)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
             
         elseif n == 7
             h2 = p+20;
             figure(h2)
-            set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,4)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
             
         elseif n == 11
             h2 = p+20;
             figure(h2)
-            set(gcf, 'Position', get(0, 'Screensize'));
 
             subplot(3,2,5)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,6)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
             
             savename = ['Group 3711 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
-            saveas(h2,fullfile(store_path, savename),'fig')
+%             saveas(h2,fullfile(store_path, savename),'fig')
             saveas(h2,fullfile(store_path, savename),'png')
             close
         end
@@ -339,38 +358,35 @@ for n = 1:n_sensors
         if n == 5
             h3 = p+40;
             figure(h3)
-            set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,1)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,2)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
             
         elseif n == 8
             h3 = p+40;
             figure(h3)
-            set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,3)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,4)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
             
         elseif n == 13
             h3 = p+40;
             figure(h3)
-            set(gcf, 'Position', get(0, 'Screensize'));
             
             subplot(3,2,5)
-            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF1)
+            plot_psd(f, P1, n, np, xlim_on, ylim_on, xmax, ymax, TF1, tube_for_l)
             
             subplot(3,2,6)
-            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF3)
+            plot_psd(f, P3, n, np, xlim_on, ylim_on, xmax, ymax, TF3, tube_for_r)
             
             savename = ['Group 5813 - Power ', num2str(floor(power(p))), ' W - ', ascdesc];
-            saveas(h3,fullfile(store_path, savename),'fig')
+%             saveas(h3,fullfile(store_path, savename),'fig')
             saveas(h3,fullfile(store_path, savename),'png')
             close
             

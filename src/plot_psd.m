@@ -1,7 +1,10 @@
-function plot_psd(f, P, n, np, xlim_on, ylim_on, xmax, ymax, ystep, TF)
+function plot_psd(f, P, n, np, xlim_on, ylim_on, xmax, ymax, TF, tube_format)
+
+ystep = ymax/5;
+set(gcf, 'Position', get(0, 'Screensize'));
 
 plot(f,P(1:np/2+1),'b','LineWidth',1)
-title({'Circular';['Sensor T', num2str(n)]})
+title({tube_format;['Sensor T', num2str(n)]})
 xlabel('Frequency [Hz]')
 ylabel('Magnitude')
 xticks(0:xmax/10:xmax)
